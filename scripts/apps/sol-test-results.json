@@ -1,0 +1,120 @@
+[
+  {
+    "helper": "calendar_list.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "/Users/rishikgoenka/Downloads/macos-osascript-computer-use/scripts/apps/native_read.js: execution error: Error: Error: Calendar is not running; launch it intentionally before readi"
+  },
+  {
+    "helper": "finder_selection.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 0,
+    "diagnostic": "OK (content omitted)"
+  },
+  {
+    "helper": "mail_inbox.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "/Users/rishikgoenka/Downloads/macos-osascript-computer-use/scripts/apps/native_read.js: execution error: Error: Error: Mail is not running; launch it intentionally before reading ("
+  },
+  {
+    "helper": "messages_chats.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "/Users/rishikgoenka/Downloads/macos-osascript-computer-use/scripts/apps/native_read.js: execution error: Error: Error: Messages is not running; launch it intentionally before readi"
+  },
+  {
+    "helper": "notes_list.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 0,
+    "diagnostic": "OK (content omitted)"
+  },
+  {
+    "helper": "reminders_lists.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "/Users/rishikgoenka/Downloads/macos-osascript-computer-use/scripts/apps/native_read.js: execution error: Error: Error: Reminders is not running; launch it intentionally before read"
+  },
+  {
+    "helper": "spark_accounts.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "Error: Spark CLI can't access your Spark Desktop application. Please check that the app is running and CLI settings are enabled."
+  },
+  {
+    "helper": "spark_contacts.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "Error: Spark CLI can't access your Spark Desktop application. Please check that the app is running and CLI settings are enabled."
+  },
+  {
+    "helper": "spark_draft.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "missing arguments",
+    "exit": 2
+  },
+  {
+    "helper": "spark_events.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "Error: Spark CLI can't access your Spark Desktop application. Please check that the app is running and CLI settings are enabled."
+  },
+  {
+    "helper": "spark_list.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "Error: Spark CLI can't access your Spark Desktop application. Please check that the app is running and CLI settings are enabled."
+  },
+  {
+    "helper": "spark_read.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "Error: Spark CLI can't access your Spark Desktop application. Please check that the app is running and CLI settings are enabled."
+  },
+  {
+    "helper": "spark_search.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 1,
+    "diagnostic": "Error: Spark CLI can't access your Spark Desktop application. Please check that the app is running and CLI settings are enabled."
+  },
+  {
+    "helper": "spark_send.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "missing arguments",
+    "exit": 2
+  },
+  {
+    "helper": "system_status.sh",
+    "syntax": 0,
+    "help": 0,
+    "test": "read-only runtime",
+    "exit": 0,
+    "diagnostic": "OK (content omitted)"
+  }
+]
