@@ -1,6 +1,7 @@
 #!/bin/bash
 # Validate the skill, then install this copy into ~/.claude/skills and ~/.codex/skills (replacing older copies).
 # Usage: scripts/sync.sh [--check]   (--check validates only)
+# After installing, runs a READ-ONLY live smoke test from each installed copy (probe + app_dictionary; never launches apps).
 # Side effects: WRITES ~/.claude/skills/macos-osascript-computer-use and ~/.codex/skills/macos-osascript-computer-use
 set -u
 SRC="$(cd "$(dirname "$0")/.." && pwd)"; NAME=macos-osascript-computer-use
@@ -20,3 +21,12 @@ for d in "$HOME/.claude/skills" "$HOME/.codex/skills"; do
   find "$d/$NAME" \( -name .git -o -name __pycache__ -o -name .DS_Store \) -prune -exec rm -rf {} +
   echo "installed: $d/$NAME"
 done
+# READ-ONLY smoke test from each installed copy (fails loudly if an installed copy is broken)
+smoke=0
+for d in "$HOME/.claude/skills" "$HOME/.codex/skills"; do
+  I="$d/$NAME/scripts/core"
+  "$I/probe.sh" Finder 2>&1 | grep -q "accessibility (UI scripting, keystrokes): OK" || { echo "smoke: probe/Accessibility FAILED in $d" >&2; smoke=1; }
+  "$I/app_dictionary.sh" Finder --commands >/dev/null 2>&1 || { echo "smoke: app_dictionary FAILED in $d" >&2; smoke=1; }
+  "$I/app_state.sh" Finder --json 2>/dev/null | grep -q '"running":true' || { echo "smoke: app_state FAILED in $d" >&2; smoke=1; }
+done
+[ $smoke = 0 ] && echo "smoke test OK (both installed copies)" || { echo "smoke test FAILED" >&2; exit 1; }
