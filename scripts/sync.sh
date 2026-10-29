@@ -11,6 +11,17 @@ for f in "$SRC"/scripts/*/*.sh "$SRC"/scripts/*.sh; do bash -n "$f" || { echo "s
 for f in "$SRC"/scripts/core/*.py; do python3 -I -c "import ast,sys; ast.parse(open(sys.argv[1]).read())" "$f" || { echo "python: $f" >&2; fail=1; }; done
 t=$(mktemp -d); awk -v d="$t" '/^ *```applescript/{n++; g=sprintf("%s/b%02d.applescript",d,n); inb=1; next} /^ *```/{inb=0; next} inb{print > g}' "$SRC/SKILL.md"
 for g in "$t"/*.applescript; do osacompile -o "$t/x.scpt" "$g" 2>/dev/null || { echo "AppleScript block fails: $(basename "$g")" >&2; fail=1; }; done; rm -rf "$t"
+python3 -I - "$SRC/SKILL.md" <<'PY' || fail=1
+import re,sys
+s=open(sys.argv[1]).read().split("---",2)[2]
+nb=re.sub(r"```.*?```","",s,flags=re.S); nb=re.sub(r"`[^`\n]*`","",nb)
+st=[];bad=[]
+for c,t in re.findall(r"<(/?)([a-z_]+)(?:\s[^>]*)?>",nb):
+    if not c: st.append(t)
+    elif st and st[-1]==t: st.pop()
+    else: bad.append(t)
+if bad or st: sys.exit("SKILL.md XML tags unbalanced: bad=%s open=%s" % (bad, st))
+PY
 desc=$(sed -n 's/^description: //p' "$SRC/SKILL.md" | head -1); [ ${#desc} -le 1024 ] || { echo "description > 1024 chars" >&2; fail=1; }
 [ $fail = 0 ] || { echo "validation FAILED; nothing installed" >&2; exit 1; }
 echo "validation OK"

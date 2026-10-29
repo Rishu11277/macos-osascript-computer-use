@@ -1,6 +1,6 @@
 ---
 name: macos-osascript-computer-use
-description: Controls macOS apps from a shell with osascript (AppleScript and JXA) when no dedicated computer-use, browser, or app MCP tools are available. Includes the full AppleScript language reference and 39 helpers to inspect apps, click menus and buttons, set fields, type and paste safely, send keys, wait, manage windows, take screenshots, run JavaScript in Chrome, and work with Spark Mail, Notes, Mail, Calendar, Reminders, Finder, Messages, VS Code, GitHub Desktop, Arduino IDE, and LEGO SPIKE. Use whenever a task needs a Mac app or the screen and only a shell is available, or the user mentions osascript, AppleScript, JXA, System Events, or automating any of these apps.
+description: Controls macOS apps from a shell with osascript (AppleScript and JXA) and the Accessibility API when no dedicated computer-use, browser, or app MCP tools are available. Includes AppleScript language summaries and 47 helpers to inspect apps, click menus and buttons, set fields, type and paste safely, send keys, wait, manage windows, take window screenshots, run JavaScript in Chrome, and work with Spark Mail, Notes, Mail, Calendar, Reminders, Finder, Messages, VS Code, GitHub Desktop, Arduino IDE, LEGO SPIKE, and Microsoft apps (OneNote, Outlook, Teams, Word, Excel, PowerPoint, Edge, OneDrive). Use whenever a task needs a Mac app or the screen and only a shell is available, or the user mentions osascript, AppleScript, JXA, System Events, or automating any of these apps.
 ---
 
 <skill>
@@ -63,7 +63,7 @@ Every helper takes `-h`. Options that need a value fail fast (exit 2) when it's 
 | `wait_for.sh window\|element\|frontmost\|gone "<proc>" [...] [--timeout S]` | bounded wait (1–300 s) for a window, element, focus, or a window closing. Each check is time-bounded, and a check that runs out of time counts as pending, never as success; "not there yet" errors keep waiting, other errors exit 2 | READ-ONLY | live (met → 0, timeout → 1, real error → 2) |
 | `screenshot.sh window "<proc>" OUT.png \| screen OUT.png \| region X,Y,W,H OUT.png` | `window` mode captures **only that window** by its CoreGraphics window number (`screencapture -l`), so windows covering it are excluded; it refuses rather than falling back to a region grab. `screen`/`region` capture whatever is visible, including other apps, so use them carefully | WRITES file | live (covered Finder window captured alone) |
 | `chrome_js.sh "<url substring>" "<js or Promise>" [timeout 1-120]` | run JS in the **one** matching Chrome tab and await Promises; refuses on 0 or several matches | depends on JS | live (doc export, reject, multi-match) |
-Support files (keep next to the helpers): `_resolve_app.sh` finds apps **on disk** first, so unknown names never trigger macOS's "Where is <app>?" chooser. `_osa_sdef.py` reads legacy dictionaries. `_cg_window.js` finds window numbers for screenshots. `_pid.sh` and `_ax_walk.py` power the fast default search, and `_ax_focus.py` powers the text-focus guard. `_find.applescript` is the shared element finder that `ui_find`, `click_element`, `get_field`, and `set_field` prepend at run time; keep it next to them.
+Support files (keep next to the helpers): `_resolve_app.sh` finds apps **on disk** first, so unknown names never trigger macOS's "Where is X?" chooser. `_osa_sdef.py` reads legacy dictionaries. `_cg_window.js` finds window numbers for screenshots. `_pid.sh` and `_ax_walk.py` power the fast default search, and `_ax_focus.py` powers the text-focus guard. `_find.applescript` is the shared element finder that `ui_find`, `click_element`, `get_field`, and `set_field` prepend at run time; keep it next to them.
 </core_helpers>
 
 <app_helpers dir="scripts/apps">
@@ -81,6 +81,11 @@ Support files (keep next to the helpers): `_resolve_app.sh` finds apps **on disk
 | `mail_inbox.sh [LIMIT]`, `mail_draft.sh TO SUBJECT BODY_FILE` | Apple Mail inbox metadata; draft helper (never sends) | READ-ONLY / WRITES | live: inbox; `mail_draft` saves and closes the composer, then verifies the new message in Mail's Drafts mailbox by ID, recipient, subject, and body (stops after 10 s if it can't verify). Sol's test persisted ID 92 and confirmed it separately |
 | `calendar_list.sh`, `reminders_lists.sh`, `messages_chats.sh` | container metadata (read-only) | READ-ONLY | live |
 | `finder_selection.sh`, `system_status.sh` | selected Finder items; volume and dark mode | READ-ONLY | live |
+| `outlook_inspect.sh state \| find ROLE [LABEL_CONTAINS]` | Outlook installed/running state (JSON), or bounded UI search; no mailbox access or sending | READ-ONLY | not installed here, untested; syntax/help/usage and missing-app refusal pass |
+| `onenote_inspect.sh state \| find ROLE [LABEL_CONTAINS]` | OneNote installed/running state (JSON), or bounded UI search | READ-ONLY | live state on installed but closed OneNote; closed-app search refused without launch; signed-in UI/content untested |
+| `teams_inspect.sh state \| find ROLE [LABEL_CONTAINS]` | Teams installed/running state (JSON), or bounded UI search; supports current and classic bundle IDs | READ-ONLY | not installed here, untested; syntax/help/usage and missing-app refusal pass |
+| `word_inspect.sh [state\|dictionary\|ui]` | Word metadata, installed scripting terms, or bounded UI discovery; default state | READ-ONLY, never launches | Help, syntax, AppleScript compilation, bad arguments and missing-app refusal passed; Word not installed here, app workflows untested |
+| `powerpoint_inspect.sh [state\|dictionary\|ui]` | PowerPoint metadata, installed scripting terms, or bounded UI discovery; default state | READ-ONLY, never launches | Help, syntax, AppleScript compilation, bad arguments and missing-app refusal passed; PowerPoint not installed here, app workflows untested |
 Notes: the native list helpers print JSON, and output is row-limited even though the underlying query may enumerate the whole collection. `native_read.js` must stay next to them. Draft bodies passed as arguments may be visible to local process inspection. Sol's test log is in `scripts/apps/sol-test-results.json`.
 </app_helpers>
 </helpers>
@@ -125,6 +130,59 @@ Apps without a dictionary (VS Code, GitHub Desktop, Arduino IDE, SPIKE, Spark De
 - System Settings has a weak dictionary. Prefer `open "x-apple.systempreferences:…"` URLs plus UI helpers, and **never change settings without approval**.
 - Messages: read-only by default. Sending iMessages is outward-facing.
 </app>
+<app_group name="Microsoft apps">
+On the test Mac only Microsoft OneNote (plus VS Code, above) is installed. Word, Excel, PowerPoint, Outlook, Teams, Edge, and OneDrive were absent, so their entries are runtime-discovery playbooks marked **untested**. The `*_inspect.sh` helpers never launch apps and refuse cleanly when an app is missing. Always run `state` and `dictionary` first on a new machine.
+<app name="Microsoft Outlook" dictionary="version-dependent; inspect locally">
+- Start with `scripts/apps/outlook_inspect.sh state`. Outlook is **not installed here, untested**. No mailbox, draft, calendar or sending workflow has been verified.
+- For installed Outlook, inspect `app_dictionary.sh "Microsoft Outlook" --all` first. Different Outlook versions and modes can expose different scripting support; never assume Apple Mail's dictionary applies. A missing dictionary is a reason to inspect UI capabilities, not to enable or change app settings automatically.
+- Launch intentionally with `activate_app.sh "Microsoft Outlook" --launch` only when needed. Discover visible controls with `outlook_inspect.sh find AXButton` or `find AXTextField "Search"`; inspect actual labels before using generic `click_element`, `set_field`, or focus/typing helpers. The helper searches window 1; use core helpers with `--window` for another window.
+- Reading a message can mark it read. Creating a draft may save/sync it. Verify the selected mailbox and exact recipient before editing; sending mail or invitations needs authorization for that exact item. Never use keyboard shortcuts that might send while merely testing.
+</app>
+<app name="Microsoft OneNote" dictionary="no bundled dictionary found here; use UI">
+- Installed locally at `/Applications/Microsoft OneNote.app`, bundle ID `com.microsoft.onenote.mac`. Probe and state were tested without launching it; signed-in notebook/page operations remain untested. No bundled sdef or OSAScriptingDefinition was found; do not claim native notebook AppleScript support.
+- `scripts/apps/onenote_inspect.sh state` reports state without launch. After intentional launch, `onenote_inspect.sh find AXButton` or `find AXTextField "Search"` discovers visible controls. This bounded search reads window 1; core `ui_find --window N` selects another window.
+- Inspect notebook, section and page names before acting. Use discovered labels with generic UI helpers, focus a real editable field before typing, and read the result back. Never guess a note's ID or UI position.
+- OneNote can autosave and sync edits immediately. Use a separately named throwaway page only when content testing is authorized. Do not type into an existing page, delete notebooks/pages, share, or change sync settings as a test.
+- If UI discovery is sparse, inspect `ui_tree`/a window-only screenshot. `enable_ax.sh` is a best-effort option for an app exposing Chromium/Electron AX attributes; OneNote support for that switch has not been verified.
+</app>
+<app name="Microsoft Teams" dictionary="inspect locally; prefer UI">
+- Teams is **not installed here, untested**. `scripts/apps/teams_inspect.sh state` checks current `com.microsoft.teams2`, then classic `com.microsoft.teams`, without launching either. If both are installed it prefers current Teams.
+- Intentionally launch the selected app path from state when needed. `teams_inspect.sh find AXButton` or `find AXTextField "Search"` discovers controls in window 1. Use the returned process name with generic core helpers; do not assume the visible app name equals the process name.
+- For a sparse Chromium/Electron UI, try `enable_ax.sh "<actual process>"`, then re-run fast `ui_find`; this changes accessibility exposure and is not a verified Teams workflow here. Avoid the slow full-tree walk on large chat views.
+- Viewing chats may mark them read. Compose only in an explicitly selected chat/channel; Return may send rather than add a newline. Do not send test messages, join calls, toggle camera/microphone, share screens, upload files or change presence/settings as a discovery test.
+</app>
+<app name="Microsoft Word" dictionary="inspect installed version">
+- Start with `scripts/apps/word_inspect.sh state`, then `dictionary`. Missing installation exits 1 without an application picker. The dictionary is read from the installed version; if a legacy dictionary needs launch, the helper refuses instead of launching. Launch intentionally through `activate_app.sh "Microsoft Word" --launch` only when the task needs the app.
+- Prefer Word's installed scripting dictionary for document/range operations. Search its classes and commands for document, range, content, find, save, and export. Do not translate Windows VBA or COM examples directly into AppleScript; their object models and commands differ.
+- Bind actions to the specific document, then to its range. Avoid using the active document or current selection as an unchecked write target. When preserving an original, create a separate working copy before editing; saving later under another name is too late if AutoSave has already written changes to a synced original.
+- For ribbon or dialog features missing from the dictionary: `word_inspect.sh ui` inspects window 1 (depth 20, at most 1,500 nodes and 100 results). Use core `window.sh list` and `ui_find.sh` with a specific window and label for further inspection. Inspect actual menu labels before clicking; labels vary with version and language. Editing requires a confirmed text insertion point, not merely a selected document window.
+- Verify requested text and formatting in Word, then verify the saved output path and reopen the output when practical. A file existing on disk alone does not prove tracked changes, layout, or an export are correct. Do not accept all tracked changes as a shortcut for ordinary edits.
+- **Status:** Word not installed here; document reading, editing, saving and exporting are untested. The inspection helper's missing-app and argument guards were tested.
+</app>
+<app name="Microsoft PowerPoint" dictionary="inspect installed version">
+- Start with `scripts/apps/powerpoint_inspect.sh state`, then `dictionary`. Both are read-only and never launch. If needed for the task, launch deliberately with `activate_app.sh "Microsoft PowerPoint" --launch` and inspect again.
+- Consult the installed dictionary for presentation, slide, shape, text range, save and export operations. Bind the presentation and intended slide/shape explicitly. Slide ordering can change during an edit; reread the target after adding or moving slides rather than reusing an old index blindly.
+- For UI work, `powerpoint_inspect.sh ui` inspects window 1 (depth 20, at most 1,500 nodes and 100 results). Inspect the selected slide and editable text box before typing. A selected slide canvas is not a text insertion point; text-focus refusal should trigger further inspection, not an automatic `--any-focus` override.
+- Save to a separate local working copy before edits when preserving the original, especially with AutoSave/cloud documents. Export using the current dictionary or inspected menu/dialog. Check the resulting slide count and rendered layout; reading text alone cannot validate clipping, fonts, charts or slide backgrounds.
+- Starting a slideshow changes the desktop and may use another display. Do it only when the task calls for presenting/testing the show, and verify the correct presentation first.
+- **Status:** PowerPoint not installed here; presentation reading, editing, saving, exporting and slideshow behavior are untested. The inspection helper's missing-app and argument guards were tested.
+</app>
+<app name="Microsoft Excel" dictionary="inspect installed version; not installed on the test Mac, untested">
+- Excel was not installed on the test Mac; the following workflow is untested in Excel. Check availability with `scripts/core/app_state.sh "Microsoft Excel"`. For an installed app, inspect its own scripting dictionary with `scripts/core/app_dictionary.sh "Microsoft Excel"` (use `--allow-launch` only when launching is authorized and needed). Dictionary availability and terminology can vary by version; verify commands against the installed version before using them. If scripting is unavailable, inspect the running app with `ui_find.sh` and its menus with `click_menu.sh --list`. Identify the exact workbook and sheet before reading or changing content; work on a separate copy when preserving the original. Verify changes by reading the target back. Cloud-backed workbooks may sync changes; treat sharing or publishing as separate actions requiring authorization.
+- No Excel-specific helper is included: the app and its dictionary were unavailable for validation here. Existing generic helpers provide discovery and UI inspection.
+</app>
+<app name="Microsoft Edge" dictionary="expected (Chromium); not installed on the test Mac, untested">
+- Check: `scripts/core/app_state.sh "Microsoft Edge"`. On the test Mac it exits 1 with "app not found on disk".
+- If installed, Edge is Chromium-based. Confirm its dictionary with `app_dictionary.sh "Microsoft Edge"` before reusing Chrome syntax (`tell application "Microsoft Edge" to get {title, URL} of every tab of every window`, `tell active tab of front window to execute javascript "…"`). Verify every term against the installed dictionary; don't assume it's identical to Chrome.
+- `scripts/core/chrome_js.sh` and `scripts/apps/chrome_tabs.sh` target Google Chrome only. For Edge, adapt the same pattern (exactly one matching tab; Promise results stored on `window` and read back in a second call). Running page JavaScript needs Edge's equivalent of "Allow JavaScript from Apple Events".
+- If page content isn't visible to Accessibility, query it once with the default fast `ui_find`. Chromium exposes the web tree after an accessibility client asks for it (seen with Chrome: 57 → ~300 elements).
+</app>
+<app name="Microsoft OneDrive" dictionary="unknown; not installed on the test Mac, untested">
+- Check: `scripts/core/app_state.sh "OneDrive"`. On the test Mac it exits 1 with "app not found on disk".
+- Prefer the file system: synced files live under `~/Library/CloudStorage/OneDrive-*` (verify the path on the machine). Read them with normal shell tools. **Writing, moving, or deleting there syncs to the cloud**, so treat it as outward-facing and confirm first.
+- App UI (menu-bar app): inspect with `ui_tree.sh`, `ui_find.sh`, and `click_menu.sh … --list`. Pausing sync, signing in or out, sharing links, and deleting are changes that need task-specific authorization.
+</app>
+</app_group>
 </app_playbooks>
 
 <errors>
